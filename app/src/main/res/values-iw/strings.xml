@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MyWikiSearcher</string>
+    <string name="tab_search_caption">לחפש</string>
+    <string name="tab_bookmarks_caption">סימניות</string>
+    <string name="bookmark_added">סימניה נוספה</string>
+    <string name="bookmark_removed">הסימניה הוסרה</string>
+
+</resources>

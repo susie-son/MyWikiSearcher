@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MyWikiSearcher</string>
+    <string name="tab_search_caption">Search</string>
+    <string name="tab_bookmarks_caption">Bookmarks</string>
+    <string name="bookmark_added">Bookmark added</string>
+    <string name="bookmark_removed">Bookmark removed</string>
+
+</resources>
