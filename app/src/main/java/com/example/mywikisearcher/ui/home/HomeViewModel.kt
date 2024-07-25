@@ -1,8 +1,8 @@
-package com.example.mywikisearcher
+package com.example.mywikisearcher.ui.home
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mywikisearcher.MainActivity.Tab
 import com.example.mywikisearcher.model.QueryResponse
 import com.example.mywikisearcher.repository.BookmarkDao
 import com.example.mywikisearcher.repository.Service
@@ -15,29 +15,36 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
+class HomeViewModel @Inject constructor(
     private val service: Service,
     private val bookmarkDao: BookmarkDao
 ): ViewModel() {
 
     private val searchResultList = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
     private val bookmarksList = bookmarkDao.getAllBookmarks()
-    private val _selectedTab = MutableStateFlow(Tab.Search)
-    val selectedTab: StateFlow<Tab> = _selectedTab.asStateFlow()
+    private val _selectedTab = MutableStateFlow(HomeTab.Search)
+    val selectedTab: StateFlow<HomeTab> = _selectedTab.asStateFlow()
+
+    val searchText = mutableStateOf("")
 
     val list = combine(searchResultList, bookmarksList, selectedTab) { search, bookmarks, tab ->
         when (tab) {
-            Tab.Search -> search
-            Tab.Bookmarks -> bookmarks
+            HomeTab.Search -> search
+            HomeTab.Bookmarks -> bookmarks
         }
     }
 
-    fun selectTab(tab: Tab) {
+    fun changeSearchText(text: String) {
+        searchText.value = text
+        searchWiki(text)
+    }
+
+    fun selectTab(tab: HomeTab) {
         _selectedTab.value = tab
     }
 
-    fun searchWiki(text: CharSequence?, startFromIndex: Int = 0) {
-        if (text.isNullOrEmpty()) return
+    private fun searchWiki(text: String, startFromIndex: Int = 0) {
+        if (text.isEmpty()) return
         viewModelScope.launch {
             // Fetch a list of articles from Wikipedia!
             val response = service.prefixSearch(text.toString(), 20, startFromIndex)
