@@ -11,12 +11,14 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doOnTextChanged
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.mywikisearcher.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -36,30 +38,37 @@ class MainActivity : AppCompatActivity() {
 
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                adapter.articleList.clear()
                 if (tab != null && tab.position == 0) {
                     binding.searchTextView.visibility = View.VISIBLE
-                    adapter.articleList.addAll(viewModel.searchResultList)
+                    adapter.updateList(viewModel.searchResultList.value)
                 } else {
                     binding.searchTextView.visibility = View.GONE
-                    // TODO: This should be in the ViewModel
-                    adapter.articleList.addAll(BookmarkHelper.bookmarks)
+                    adapter.updateList(viewModel.bookmarksList.value)
                 }
-                adapter.notifyDataSetChanged()
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) { }
             override fun onTabReselected(tab: TabLayout.Tab?) { }
         })
 
         binding.searchTextView.doOnTextChanged { text, start, before, count ->
-            viewModel.searchWiki(text) { articleList ->
-                adapter.updateList(articleList)
+            viewModel.searchWiki(text)
+        }
+
+        lifecycleScope.launch {
+            viewModel.searchResultList.collect {
+                adapter.updateList(it)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.bookmarksList.collect {
+                adapter.updateList(it)
             }
         }
     }
 
     private inner class ArticleListAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(), View.OnClickListener {
-        val articleList = mutableListOf<QueryResponse.Query.Page>()
+        private val articleList = mutableListOf<QueryResponse.Query.Page>()
 
         override fun getItemCount(): Int {
             return articleList.size
@@ -78,9 +87,7 @@ class MainActivity : AppCompatActivity() {
 
             if (pos == articleList.size - 1 && binding.tabLayout.selectedTabPosition == 0) {
                 // Since we've reached the bottom of the list, fetch the next batch of results!
-                viewModel.searchWiki(binding.searchTextView.text, articleList.size) { articleList ->
-                    adapter.updateList(articleList)
-                }
+                viewModel.searchWiki(binding.searchTextView.text, articleList.size)
             }
         }
 
@@ -92,16 +99,15 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this@MainActivity, R.string.bookmark_removed, Toast.LENGTH_SHORT).show()
                 }
-                notifyDataSetChanged()
                 return
             }
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://en.wikipedia.org/wiki/${item.title}")))
         }
 
         fun updateList(newArticleList: List<QueryResponse.Query.Page>) {
-            adapter.articleList.clear()
-            adapter.articleList.addAll(newArticleList)
-            adapter.notifyDataSetChanged()
+            articleList.clear()
+            articleList.addAll(newArticleList)
+            notifyDataSetChanged()
         }
     }
 

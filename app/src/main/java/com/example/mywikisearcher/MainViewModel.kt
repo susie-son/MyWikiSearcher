@@ -3,6 +3,9 @@ package com.example.mywikisearcher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -12,13 +15,12 @@ class MainViewModel @Inject constructor(
     private val bookmarkHelper: BookmarkHelper
 ): ViewModel() {
 
-    val searchResultList = mutableListOf<QueryResponse.Query.Page>()
+    private val _searchResultList = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
+    val searchResultList: StateFlow<List<QueryResponse.Query.Page>> = _searchResultList.asStateFlow()
 
-    fun searchWiki(
-        text: CharSequence?,
-        startFromIndex: Int = 0,
-        onUpdateList: (List<QueryResponse.Query.Page>) -> Unit
-    ) {
+    val bookmarksList = bookmarkHelper.bookmarks
+
+    fun searchWiki(text: CharSequence?, startFromIndex: Int = 0) {
         if (text.isNullOrEmpty()) return
         viewModelScope.launch {
             // Fetch a list of articles from Wikipedia!
@@ -32,23 +34,15 @@ class MainViewModel @Inject constructor(
                 }
             }
 
-            if (startFromIndex == 0)
-                searchResultList.clear()
+            if (startFromIndex == 0) {
+                _searchResultList.value = emptyList()
+            }
 
-            searchResultList.addAll(finalList)
-            onUpdateList(searchResultList)
+            _searchResultList.value = finalList
         }
     }
 
-    // Returns true if the item was added to bookmarks; false otherwise
     fun handleBookmark(item: QueryResponse.Query.Page): Boolean {
-        return if (bookmarkHelper.isBookmarked(item)) {
-            bookmarkHelper.removeBookmark(item)
-            // TODO: Update the UI
-            false
-        } else {
-            bookmarkHelper.addBookmark(item)
-            true
-        }
+        return bookmarkHelper.toggleBookmark(item)
     }
 }
