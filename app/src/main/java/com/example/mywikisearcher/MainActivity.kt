@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,26 +16,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.mywikisearcher.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayout
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    @Inject
-    lateinit var service: Service
-
     private lateinit var binding: ActivityMainBinding
+    private val viewModel: MainViewModel by viewModels()
     private val adapter = ArticleListAdapter()
-    private val searchResultList = mutableListOf<QueryResponse.Query.Page>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +39,7 @@ class MainActivity : AppCompatActivity() {
                 adapter.articleList.clear()
                 if (tab != null && tab.position == 0) {
                     binding.searchTextView.visibility = View.VISIBLE
-                    adapter.articleList.addAll(searchResultList)
+                    adapter.articleList.addAll(viewModel.searchResultList)
                 } else {
                     binding.searchTextView.visibility = View.GONE
                     adapter.articleList.addAll(BookmarkHelper.bookmarks)
@@ -62,32 +51,9 @@ class MainActivity : AppCompatActivity() {
         })
 
         binding.searchTextView.doOnTextChanged { text, start, before, count ->
-            if (text!!.length > 0) {
-                searchWiki(text.toString())
+            viewModel.searchWiki(text) { articleList ->
+                adapter.updateList(articleList)
             }
-        }
-    }
-
-    private fun searchWiki(query: String, startFromIndex: Int = 0) {
-        CoroutineScope(Dispatchers.Main).launch {
-            // Fetch a list of articles from Wikipedia!
-            val response = service.prefixSearch(query, 20, startFromIndex)
-
-            // Filter out articles that don't have a thumbnail!
-            val finalList = mutableListOf<QueryResponse.Query.Page>()
-            response.query?.pages!!.forEach {
-                if (it.thumbnail != null) {
-                    finalList.add(it)
-                }
-            }
-
-            if (startFromIndex == 0)
-                searchResultList.clear()
-
-            searchResultList.addAll(finalList)
-            adapter.articleList.clear()
-            adapter.articleList.addAll(searchResultList)
-            adapter.notifyDataSetChanged()
         }
     }
 
@@ -111,7 +77,9 @@ class MainActivity : AppCompatActivity() {
 
             if (pos == articleList.size - 1 && binding.tabLayout.selectedTabPosition == 0) {
                 // Since we've reached the bottom of the list, fetch the next batch of results!
-                searchWiki(binding.searchTextView.text.toString(), articleList.size)
+                viewModel.searchWiki(binding.searchTextView.text, articleList.size) { articleList ->
+                    adapter.updateList(articleList)
+                }
             }
         }
 
@@ -130,6 +98,12 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://en.wikipedia.org/wiki/${item.title}")))
+        }
+
+        fun updateList(newArticleList: List<QueryResponse.Query.Page>) {
+            adapter.articleList.clear()
+            adapter.articleList.addAll(newArticleList)
+            adapter.notifyDataSetChanged()
         }
     }
 
