@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide
 import com.example.mywikisearcher.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayout
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,8 +24,14 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var service: Service
+
     private lateinit var binding: ActivityMainBinding
     private val adapter = ArticleListAdapter()
     private val searchResultList = mutableListOf<QueryResponse.Query.Page>()
@@ -63,18 +70,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun searchWiki(query: String, startFromIndex: Int = 0) {
         CoroutineScope(Dispatchers.Main).launch {
-            val client = OkHttpClient()
-            val json = Json {
-                ignoreUnknownKeys = true
-                coerceInputValues = true
-            }
-            val service = Retrofit.Builder()
-                .baseUrl("https://en.wikipedia.org/")
-                .client(client)
-                .addConverterFactory(json.asConverterFactory(MediaType.get("application/json")))
-                .build()
-                .create(Service::class.java)
-
             // Fetch a list of articles from Wikipedia!
             val response = service.prefixSearch(query, 20, startFromIndex)
 
