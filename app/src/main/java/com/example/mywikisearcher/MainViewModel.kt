@@ -8,7 +8,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val service: Service
+    private val service: Service,
+    private val bookmarkHelper: BookmarkHelper
 ): ViewModel() {
 
     val searchResultList = mutableListOf<QueryResponse.Query.Page>()
@@ -36,6 +37,18 @@ class MainViewModel @Inject constructor(
 
             searchResultList.addAll(finalList)
             onUpdateList(searchResultList)
+        }
+    }
+
+    // Returns true if the item was added to bookmarks; false otherwise
+    fun handleBookmark(item: QueryResponse.Query.Page): Boolean {
+        return if (bookmarkHelper.isBookmarked(item)) {
+            bookmarkHelper.removeBookmark(item)
+            // TODO: Update the UI
+            false
+        } else {
+            bookmarkHelper.addBookmark(item)
+            true
         }
     }
 }

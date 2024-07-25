@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
                     adapter.articleList.addAll(viewModel.searchResultList)
                 } else {
                     binding.searchTextView.visibility = View.GONE
+                    // TODO: This should be in the ViewModel
                     adapter.articleList.addAll(BookmarkHelper.bookmarks)
                 }
                 adapter.notifyDataSetChanged()
@@ -86,13 +87,10 @@ class MainActivity : AppCompatActivity() {
         override fun onClick(v: View) {
             val item = articleList[v.tag as Int]
             if (v.id == R.id.bookmark_image_view) {
-                if (BookmarkHelper.bookmarks.contains(item)) {
-                    BookmarkHelper.removeBookmark(item)
-                    Toast.makeText(this@MainActivity, R.string.bookmark_removed, Toast.LENGTH_SHORT).show()
-                    articleList.remove(item)
-                } else {
-                    BookmarkHelper.addBookmark(item)
+                if (viewModel.handleBookmark(item)) {
                     Toast.makeText(this@MainActivity, R.string.bookmark_added, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@MainActivity, R.string.bookmark_removed, Toast.LENGTH_SHORT).show()
                 }
                 notifyDataSetChanged()
                 return

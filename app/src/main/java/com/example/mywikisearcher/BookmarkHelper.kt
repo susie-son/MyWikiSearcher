@@ -12,6 +12,10 @@ object BookmarkHelper {
         bookmarks.remove(page)
     }
 
+    fun isBookmarked(page: QueryResponse.Query.Page): Boolean {
+        return bookmarks.contains(page)
+    }
+
     fun persistBookmarks() {
         // TODO
     }
