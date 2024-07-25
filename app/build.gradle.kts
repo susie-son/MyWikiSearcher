@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
@@ -38,10 +39,15 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        compose = true
     }
 }
 
 dependencies {
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.activity.compose)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
