@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mywikisearcher.MainActivity.Tab
 import com.example.mywikisearcher.model.QueryResponse
-import com.example.mywikisearcher.repository.BookmarkHelper
+import com.example.mywikisearcher.repository.BookmarkDao
 import com.example.mywikisearcher.repository.Service
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,11 +17,11 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val service: Service,
-    private val bookmarkHelper: BookmarkHelper
+    private val bookmarkDao: BookmarkDao
 ): ViewModel() {
 
     private val searchResultList = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
-    private val bookmarksList = bookmarkHelper.bookmarks
+    private val bookmarksList = bookmarkDao.getAllBookmarks()
     private val _selectedTab = MutableStateFlow(Tab.Search)
     val selectedTab: StateFlow<Tab> = _selectedTab.asStateFlow()
 
@@ -58,7 +58,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun handleBookmark(item: QueryResponse.Query.Page): Boolean {
-        return bookmarkHelper.toggleBookmark(item)
+    fun handleBookmark(item: QueryResponse.Query.Page) {
+        viewModelScope.launch {
+            if (bookmarkDao.isBookmarked(item.pageid)) {
+                bookmarkDao.deleteBookmark(item)
+            } else {
+                bookmarkDao.insertBookmark(item)
+            }
+        }
     }
 }

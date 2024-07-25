@@ -17,4 +17,7 @@ interface BookmarkDao {
 
     @Delete
     suspend fun deleteBookmark(page: QueryResponse.Query.Page)
+
+    @Query("SELECT EXISTS (SELECT 1 FROM page WHERE pageid = :pageid)")
+    suspend fun isBookmarked(pageid: Long): Boolean
 }

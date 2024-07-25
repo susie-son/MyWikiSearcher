@@ -95,11 +95,7 @@ class MainActivity : AppCompatActivity() {
         override fun onClick(v: View) {
             val item = articleList[v.tag as Int]
             if (v.id == R.id.bookmark_image_view) {
-                if (viewModel.handleBookmark(item)) {
-                    Toast.makeText(this@MainActivity, R.string.bookmark_added, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@MainActivity, R.string.bookmark_removed, Toast.LENGTH_SHORT).show()
-                }
+                viewModel.handleBookmark(item)
                 return
             }
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://en.wikipedia.org/wiki/${item.title}")))
