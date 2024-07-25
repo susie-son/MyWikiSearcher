@@ -2,10 +2,12 @@ package com.example.mywikisearcher
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mywikisearcher.MainActivity.Tab
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -15,10 +17,21 @@ class MainViewModel @Inject constructor(
     private val bookmarkHelper: BookmarkHelper
 ): ViewModel() {
 
-    private val _searchResultList = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
-    val searchResultList: StateFlow<List<QueryResponse.Query.Page>> = _searchResultList.asStateFlow()
+    private val searchResultList = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
+    private val bookmarksList = bookmarkHelper.bookmarks
+    private val _selectedTab = MutableStateFlow(Tab.Search)
+    val selectedTab: StateFlow<Tab> = _selectedTab.asStateFlow()
 
-    val bookmarksList = bookmarkHelper.bookmarks
+    val list = combine(searchResultList, bookmarksList, selectedTab) { search, bookmarks, tab ->
+        when (tab) {
+            Tab.Search -> search
+            Tab.Bookmarks -> bookmarks
+        }
+    }
+
+    fun selectTab(tab: Tab) {
+        _selectedTab.value = tab
+    }
 
     fun searchWiki(text: CharSequence?, startFromIndex: Int = 0) {
         if (text.isNullOrEmpty()) return
@@ -35,10 +48,10 @@ class MainViewModel @Inject constructor(
             }
 
             if (startFromIndex == 0) {
-                _searchResultList.value = emptyList()
+                searchResultList.value = emptyList()
             }
 
-            _searchResultList.value = finalList
+            searchResultList.value = finalList
         }
     }
 

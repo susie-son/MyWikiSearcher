@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide
 import com.example.mywikisearcher.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -26,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val adapter = ArticleListAdapter()
+    private val tabs: Array<Tab> = Tab.entries.toTypedArray()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,14 +39,9 @@ class MainActivity : AppCompatActivity() {
         binding.searchTextView.requestFocus()
 
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                if (tab != null && tab.position == 0) {
-                    binding.searchTextView.visibility = View.VISIBLE
-                    adapter.updateList(viewModel.searchResultList.value)
-                } else {
-                    binding.searchTextView.visibility = View.GONE
-                    adapter.updateList(viewModel.bookmarksList.value)
-                }
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                val selectedTab = tabs.getOrNull(tab.position) ?: return
+                viewModel.selectTab(selectedTab)
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) { }
             override fun onTabReselected(tab: TabLayout.Tab?) { }
@@ -55,13 +52,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            viewModel.searchResultList.collect {
-                adapter.updateList(it)
+            viewModel.selectedTab.collect {
+                binding.searchTextView.visibility = when (it) {
+                    Tab.Search -> View.VISIBLE
+                    else -> View.GONE
+                }
             }
         }
 
         lifecycleScope.launch {
-            viewModel.bookmarksList.collect {
+            viewModel.list.collectLatest {
                 adapter.updateList(it)
             }
         }
@@ -124,5 +124,10 @@ class MainActivity : AppCompatActivity() {
 
             itemView.tag = adapterPosition
         }
+    }
+
+    enum class Tab {
+        Search,
+        Bookmarks
     }
 }
