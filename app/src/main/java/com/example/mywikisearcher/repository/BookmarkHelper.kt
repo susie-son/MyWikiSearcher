@@ -1,5 +1,6 @@
-package com.example.mywikisearcher
+package com.example.mywikisearcher.repository
 
+import com.example.mywikisearcher.model.QueryResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

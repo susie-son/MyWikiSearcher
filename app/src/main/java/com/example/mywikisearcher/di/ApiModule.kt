@@ -1,6 +1,6 @@
 package com.example.mywikisearcher.di
 
-import com.example.mywikisearcher.Service
+import com.example.mywikisearcher.repository.Service
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides

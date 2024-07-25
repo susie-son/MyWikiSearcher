@@ -3,6 +3,9 @@ package com.example.mywikisearcher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mywikisearcher.MainActivity.Tab
+import com.example.mywikisearcher.model.QueryResponse
+import com.example.mywikisearcher.repository.BookmarkHelper
+import com.example.mywikisearcher.repository.Service
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

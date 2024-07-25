@@ -1,6 +1,6 @@
 package com.example.mywikisearcher.di
 
-import com.example.mywikisearcher.BookmarkHelper
+import com.example.mywikisearcher.repository.BookmarkHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
