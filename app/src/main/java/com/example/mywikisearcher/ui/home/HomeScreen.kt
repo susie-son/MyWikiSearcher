@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mywikisearcher.R
-import com.example.mywikisearcher.ui.components.PageList
+import com.example.mywikisearcher.ui.components.ArticleList
 
 @Composable
 fun HomeScreen(
@@ -27,7 +27,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val selectedTab by viewModel.selectedTab.collectAsState()
-    val pageList by viewModel.list.collectAsState(initial = emptyList())
+    val articleList by viewModel.articleList.collectAsState(initial = emptyList())
 
     val searchText by rememberSaveable { viewModel.searchText }
 
@@ -40,8 +40,8 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             )
         }
-        PageList(
-            list = pageList,
+        ArticleList(
+            list = articleList,
             onBookmarkClick = viewModel::handleBookmark,
             modifier = Modifier.fillMaxSize()
         )

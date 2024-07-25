@@ -3,10 +3,12 @@ package com.example.mywikisearcher.ui.home
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mywikisearcher.model.Article
 import com.example.mywikisearcher.model.QueryResponse
 import com.example.mywikisearcher.repository.BookmarkDao
 import com.example.mywikisearcher.repository.Service
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,10 +29,26 @@ class HomeViewModel @Inject constructor(
 
     val searchText = mutableStateOf("")
 
-    val list = combine(searchResultList, bookmarksList, selectedTab) { search, bookmarks, tab ->
+    val articleList: Flow<List<Article>> = combine(searchResultList, bookmarksList, selectedTab) { search, bookmarks, tab ->
         when (tab) {
-            HomeTab.Search -> search
-            HomeTab.Bookmarks -> bookmarks
+            HomeTab.Search -> search.map { item ->
+                Article(
+                    pageId = item.pageId,
+                    title = item.title,
+                    description = item.description,
+                    thumbnail = item.thumbnail?.source,
+                    isBookmarked = bookmarks.any { it.pageId == item.pageId }
+                )
+            }
+            HomeTab.Bookmarks -> bookmarks.map { item ->
+                Article(
+                    pageId = item.pageId,
+                    title = item.title,
+                    description = item.description,
+                    thumbnail = item.thumbnail?.source,
+                    isBookmarked = bookmarks.any { it.pageId == item.pageId }
+                )
+            }
         }
     }
 
@@ -65,12 +83,22 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun handleBookmark(item: QueryResponse.Query.Page) {
+    fun handleBookmark(article: Article) {
+        val queryPage = QueryResponse.Query.Page(
+            pageId = article.pageId,
+            title = article.title,
+            description = article.description,
+            thumbnail = article.thumbnail?.let {
+                QueryResponse.Query.Page.Thumbnail(
+                    source = it
+                )
+            }
+        )
         viewModelScope.launch {
-            if (bookmarkDao.isBookmarked(item.pageid)) {
-                bookmarkDao.deleteBookmark(item)
+            if (article.isBookmarked) {
+                bookmarkDao.deleteBookmark(queryPage)
             } else {
-                bookmarkDao.insertBookmark(item)
+                bookmarkDao.insertBookmark(queryPage)
             }
         }
     }
