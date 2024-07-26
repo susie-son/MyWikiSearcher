@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val RESULTS_PAGE_SIZE = 20
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: ArticleRepository
@@ -62,7 +64,7 @@ class HomeViewModel @Inject constructor(
 
     private fun searchWiki(text: String, startFromIndex: Int = 0) {
         viewModelScope.launch {
-            repository.getSearchList(text, 20, startFromIndex)
+            repository.getSearchList(text, RESULTS_PAGE_SIZE, startFromIndex)
         }
     }
 
@@ -80,5 +82,13 @@ class HomeViewModel @Inject constructor(
                 repository.addBookmark(dbArticle)
             }
         }
+    }
+
+    fun loadMoreResults() {
+        val tab = selectedTab.value
+        if (tab != HomeTab.Search) return
+        val text = searchText.value
+        val startFromIndex = searchResultList.value.size
+        searchWiki(text, startFromIndex)
     }
 }
