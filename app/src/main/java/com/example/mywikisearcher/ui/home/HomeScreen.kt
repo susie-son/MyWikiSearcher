@@ -28,8 +28,7 @@ fun HomeScreen(
 ) {
     val selectedTab by viewModel.selectedTab.collectAsState()
     val articleList by viewModel.articleList.collectAsState(initial = emptyList())
-
-    val searchText by rememberSaveable { viewModel.searchText }
+    val searchText by viewModel.searchText.collectAsState()
 
     Column(modifier = modifier.fillMaxWidth()) {
         HomeTabRow(selectedTab = selectedTab, onSelectTab = viewModel::selectTab)
@@ -37,7 +36,9 @@ fun HomeScreen(
             OutlinedTextField(
                 value = searchText,
                 onValueChange = viewModel::changeSearchText,
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             )
         }
         ArticleList(

@@ -1,6 +1,6 @@
 package com.example.mywikisearcher.di
 
-import com.example.mywikisearcher.repository.Service
+import com.example.mywikisearcher.repository.ApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -16,7 +16,7 @@ import retrofit2.Retrofit
 object ApiModule {
 
     @Provides
-    fun provideService(): Service {
+    fun provideService(): ApiService {
         val client = OkHttpClient()
         val json = Json {
             ignoreUnknownKeys = true
@@ -27,6 +27,6 @@ object ApiModule {
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(Service::class.java)
+            .create(ApiService::class.java)
     }
 }
