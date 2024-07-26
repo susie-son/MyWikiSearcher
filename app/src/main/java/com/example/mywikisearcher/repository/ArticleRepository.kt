@@ -25,9 +25,9 @@ class ArticleRepository @Inject constructor(
         val response = service.prefixSearch(query, maxResults, startFromIndex)
 
         // Filter out articles that don't have a thumbnail!
-        val thumbnailList = response.query?.pages!!.filter {
+        val thumbnailList = response.query?.pages?.filter {
             it.thumbnail != null
-        }
+        } ?: emptyList()
 
         val finalList = if (startFromIndex == 0) {
             thumbnailList
