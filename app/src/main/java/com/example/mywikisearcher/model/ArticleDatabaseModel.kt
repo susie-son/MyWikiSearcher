@@ -8,6 +8,8 @@ data class ArticleDatabaseModel(
     @PrimaryKey
     val id: Int,
     val title: String,
-    val description: String,
-    val thumbnail: String?
+    val description: String?,
+    val thumbnail: String?,
+    val latitude: Double?,
+    val longitude: Double?
 )

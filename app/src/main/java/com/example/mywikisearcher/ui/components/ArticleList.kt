@@ -3,6 +3,7 @@ package com.example.mywikisearcher.ui.components
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -53,10 +54,26 @@ fun ArticleItem(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val hasDescription = article.description?.let { 1 } ?: 0
+    val hasCoordinate = article.coordinate?.let { 1 } ?: 0
+
+    val numberOfLines = 1.plus(hasDescription).plus(hasCoordinate)
+    val descriptionLines = numberOfLines - hasCoordinate - 1
 
     ListItem(
-        headlineContent = { article.title?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
-        supportingContent = { article.description?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) } },
+        headlineContent = {
+            Text(article.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
+        supportingContent = {
+            article.description?.let {
+                Text(it, maxLines = descriptionLines, overflow = TextOverflow.Ellipsis)
+            }
+        },
+        overlineContent = {
+            article.coordinate?.let { (latitude, longitude) ->
+                Text(formatCoordinate(latitude, longitude))
+            }
+        },
         leadingContent = {
             article.thumbnail?.let {
                 AsyncImage(
@@ -71,13 +88,22 @@ fun ArticleItem(
         trailingContent = {
             BookmarkButton(isBookmarked = article.isBookmarked, onClick = onBookmarkClick)
         },
-        modifier = modifier.clickable {
-            article.title?.let {
+        modifier = modifier
+            .height(
+                when (numberOfLines) {
+                    3 -> 88.dp
+                    2 -> 72.dp
+                    else -> 56.dp
+                }
+            )
+            .clickable {
                 context.startActivity(
-                    Intent(Intent.ACTION_VIEW, Uri.parse("https://en.wikipedia.org/wiki/$it"))
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://en.wikipedia.org/wiki/${article.title}")
+                    )
                 )
             }
-        }
     )
 }
 
@@ -97,3 +123,9 @@ fun BookmarkButton(
         )
     }
 }
+
+private fun formatCoordinate(latitude: Double, longitude: Double): String {
+    return "${latitude.format(3)}, ${longitude.format(3)}"
+}
+
+private fun Double.format(digit: Int) = "%.${digit}f".format(this)

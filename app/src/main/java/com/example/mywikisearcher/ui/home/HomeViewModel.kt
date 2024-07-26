@@ -36,9 +36,12 @@ class HomeViewModel @Inject constructor(
                 ArticleDisplayModel(
                     id = it.pageId,
                     title = it.title ?: "",
-                    description = it.description ?: "",
+                    description = it.description,
                     thumbnail = it.thumbnail?.source,
-                    isBookmarked = bookmarks.any { bookmark -> it.pageId == bookmark.id }
+                    isBookmarked = bookmarks.any { bookmark -> it.pageId == bookmark.id },
+                    coordinate = it.coordinates?.firstOrNull()?.let { coordinate ->
+                        Pair(coordinate.lat, coordinate.lon)
+                    },
                 )
             }
             HomeTab.Bookmarks -> bookmarks.map {
@@ -47,7 +50,10 @@ class HomeViewModel @Inject constructor(
                     title = it.title,
                     description = it.description,
                     thumbnail = it.thumbnail,
-                    isBookmarked = true
+                    isBookmarked = true,
+                    coordinate = if (it.latitude != null && it.longitude != null) {
+                        Pair(it.latitude, it.longitude)
+                    } else null
                 )
             }
         }
@@ -73,7 +79,9 @@ class HomeViewModel @Inject constructor(
             id = article.id,
             title = article.title,
             description = article.description,
-            thumbnail = article.thumbnail
+            thumbnail = article.thumbnail,
+            latitude = article.coordinate?.first,
+            longitude = article.coordinate?.second
         )
         viewModelScope.launch {
             if (article.isBookmarked) {
