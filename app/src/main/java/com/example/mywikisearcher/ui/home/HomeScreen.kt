@@ -6,14 +6,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -49,26 +48,25 @@ fun HomeScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTabRow(
     selectedTab: HomeTab,
     onSelectTab: (HomeTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    SecondaryTabRow(
+    TabRow(
         selectedTabIndex = selectedTab.ordinal,
         modifier = modifier
     ) {
         Tab(
-            selected = selectedTab.ordinal == 0,
+            selected = selectedTab == HomeTab.Search,
             onClick = { onSelectTab(HomeTab.Search) },
             text = {
                 Text(stringResource(R.string.tab_search_caption))
             }
         )
         Tab(
-            selected = selectedTab.ordinal == 1,
+            selected = selectedTab == HomeTab.Bookmarks,
             onClick = { onSelectTab(HomeTab.Bookmarks) },
             text = {
                 Text(stringResource(R.string.tab_bookmarks_caption))
@@ -83,9 +81,7 @@ fun HomeTopBar(
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        title = {
-            Text(stringResource(R.string.app_name))
-        },
+        title = { Text(stringResource(R.string.app_name)) },
         modifier = modifier
     )
 }
