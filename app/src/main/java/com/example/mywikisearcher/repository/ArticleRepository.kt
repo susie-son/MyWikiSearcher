@@ -1,6 +1,6 @@
 package com.example.mywikisearcher.repository
 
-import com.example.mywikisearcher.model.ArticleDatabaseModel
+import com.example.mywikisearcher.model.ArticleEntity
 import com.example.mywikisearcher.model.QueryResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,14 +10,14 @@ class ArticleRepository @Inject constructor(
     private val service: ApiService,
     private val dao: BookmarkDao
 ) {
-    private val _searchResultList = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
-    val searchResultList = _searchResultList.asStateFlow()
+    private val _searchResults = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
+    val searchResults = _searchResults.asStateFlow()
 
-    val bookmarkList = dao.getAllBookmarks()
+    val bookmarks = dao.getAllBookmarks()
 
-    suspend fun getSearchList(query: String, maxResults: Int, startFromIndex: Int) {
-        if (query.isEmpty()) {
-            _searchResultList.value = emptyList()
+    suspend fun searchArticles(query: String, maxResults: Int, startFromIndex: Int) {
+        if (query.isBlank()) {
+            _searchResults.value = emptyList()
             return
         }
 
@@ -25,24 +25,22 @@ class ArticleRepository @Inject constructor(
         val response = service.prefixSearch(query, maxResults, startFromIndex)
 
         // Filter out articles that don't have a thumbnail!
-        val thumbnailList = response.query?.pages?.filter {
+        val articlesWithThumbnails = response.query?.pages?.filter {
             it.thumbnail != null
         } ?: emptyList()
 
-        val finalList = if (startFromIndex == 0) {
-            thumbnailList
+        _searchResults.value = if (startFromIndex == 0) {
+            articlesWithThumbnails
         } else {
-            _searchResultList.value + thumbnailList
+            _searchResults.value + articlesWithThumbnails
         }
-
-        _searchResultList.value = finalList
     }
 
-    suspend fun removeBookmark(article: ArticleDatabaseModel) {
+    suspend fun removeBookmark(article: ArticleEntity) {
         dao.deleteBookmark(article)
     }
 
-    suspend fun addBookmark(article: ArticleDatabaseModel) {
-        dao.insertBookmark(article)
+    suspend fun addBookmark(article: ArticleEntity) {
+        dao.insertOrReplaceBookmark(article)
     }
 }

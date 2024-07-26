@@ -1,131 +1,25 @@
 package com.example.mywikisearcher.ui.components
 
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.mywikisearcher.R
-import com.example.mywikisearcher.model.ArticleDisplayModel
+import com.example.mywikisearcher.model.ArticleState
 
 @Composable
 fun ArticleList(
-    list: List<ArticleDisplayModel>,
-    listState: LazyListState,
-    onBookmarkClick: (ArticleDisplayModel) -> Unit,
-    onLoadMoreResults: () -> Unit,
+    articles: List<ArticleState>,
+    onBookmarkClick: (ArticleState) -> Unit,
+    onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        state = listState,
-        modifier = modifier
-    ) {
-        itemsIndexed(list) { index, article ->
-            if (index == list.lastIndex) {
-                onLoadMoreResults()
+    LazyColumn(modifier = modifier) {
+        itemsIndexed(articles) { index, article ->
+            if (index == articles.lastIndex) {
+                onLoadMore()
             }
-            ArticleItem(
-                article = article,
-                onBookmarkClick = { onBookmarkClick(article) }
-            )
+            ArticleItem(article = article, onBookmarkClick = { onBookmarkClick(article) })
         }
     }
 }
-
-@Composable
-fun ArticleItem(
-    article: ArticleDisplayModel,
-    onBookmarkClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val hasDescription = article.description?.let { 1 } ?: 0
-    val hasCoordinate = article.coordinate?.let { 1 } ?: 0
-
-    val numberOfLines = 1.plus(hasDescription).plus(hasCoordinate)
-    val descriptionLines = numberOfLines - hasCoordinate - 1
-
-    ListItem(
-        headlineContent = {
-            Text(article.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        },
-        supportingContent = {
-            article.description?.let {
-                Text(it, maxLines = descriptionLines, overflow = TextOverflow.Ellipsis)
-            }
-        },
-        overlineContent = {
-            article.coordinate?.let { (latitude, longitude) ->
-                Text(formatCoordinate(latitude, longitude))
-            }
-        },
-        leadingContent = {
-            article.thumbnail?.let {
-                AsyncImage(
-                    model = it,
-                    // TODO: Add content description
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        },
-        trailingContent = {
-            BookmarkButton(isBookmarked = article.isBookmarked, onClick = onBookmarkClick)
-        },
-        modifier = modifier
-            .height(
-                when (numberOfLines) {
-                    3 -> 88.dp
-                    2 -> 72.dp
-                    else -> 56.dp
-                }
-            )
-            .clickable {
-                context.startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://en.wikipedia.org/wiki/${article.title}")
-                    )
-                )
-            }
-    )
-}
-
-@Composable
-fun BookmarkButton(
-    isBookmarked: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(
-            painter = painterResource(
-                if (isBookmarked) R.drawable.baseline_bookmark_24 else R.drawable.baseline_bookmark_border_24
-            ),
-            // TODO: Add content description
-            contentDescription = null
-        )
-    }
-}
-
-private fun formatCoordinate(latitude: Double, longitude: Double): String {
-    return "${latitude.format(3)}, ${longitude.format(3)}"
-}
-
-private fun Double.format(digit: Int) = "%.${digit}f".format(this)

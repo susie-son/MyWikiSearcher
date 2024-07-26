@@ -4,5 +4,6 @@
     <string name="tab_bookmarks_caption">סימניות</string>
     <string name="bookmark_added">סימניה נוספה</string>
     <string name="bookmark_removed">הסימניה הוסרה</string>
+    <string name="coordinate_format">%s, %s</string>
 
 </resources>

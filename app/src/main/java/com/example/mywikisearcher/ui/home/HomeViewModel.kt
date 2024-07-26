@@ -2,8 +2,10 @@ package com.example.mywikisearcher.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mywikisearcher.model.ArticleDatabaseModel
-import com.example.mywikisearcher.model.ArticleDisplayModel
+import com.example.mywikisearcher.util.Constants.SEARCH_MAX_RESULTS
+import com.example.mywikisearcher.model.ArticleState
+import com.example.mywikisearcher.model.toArticleEntity
+import com.example.mywikisearcher.model.toArticleState
 import com.example.mywikisearcher.repository.ArticleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -14,89 +16,57 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val RESULTS_PAGE_SIZE = 20
-
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: ArticleRepository
-): ViewModel() {
+) : ViewModel() {
 
-    private val searchResultList = repository.searchResultList
-    private val bookmarksList = repository.bookmarkList
+    private val searchedArticles = repository.searchResults
+    private val bookmarkedArticles = repository.bookmarks
 
-    private val _selectedTab = MutableStateFlow(HomeTab.Search)
-    val selectedTab: StateFlow<HomeTab> = _selectedTab.asStateFlow()
+    private val _selectedTab = MutableStateFlow(HomeScreenTab.Search)
+    val selectedTab: StateFlow<HomeScreenTab> = _selectedTab.asStateFlow()
 
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
-    val articleList: Flow<List<ArticleDisplayModel>> = combine(searchResultList, bookmarksList, selectedTab) { search, bookmarks, tab ->
-        when (tab) {
-            HomeTab.Search -> search.map {
-                ArticleDisplayModel(
-                    id = it.pageId,
-                    title = it.title ?: "",
-                    description = it.description,
-                    thumbnail = it.thumbnail?.source,
-                    isBookmarked = bookmarks.any { bookmark -> it.pageId == bookmark.id },
-                    coordinate = it.coordinates?.firstOrNull()?.let { coordinate ->
-                        Pair(coordinate.lat, coordinate.lon)
-                    },
-                )
-            }
-            HomeTab.Bookmarks -> bookmarks.map {
-                ArticleDisplayModel(
-                    id = it.id,
-                    title = it.title,
-                    description = it.description,
-                    thumbnail = it.thumbnail,
-                    isBookmarked = true,
-                    coordinate = if (it.latitude != null && it.longitude != null) {
-                        Pair(it.latitude, it.longitude)
-                    } else null
-                )
+    val articleList: Flow<List<ArticleState>> =
+        combine(searchedArticles, bookmarkedArticles, selectedTab) { search, bookmarks, tab ->
+            when (tab) {
+                HomeScreenTab.Search -> search.map {
+                    it.toArticleState(bookmarked = bookmarks.any { bookmark -> bookmark.id == it.pageId })
+                }
+                HomeScreenTab.Bookmarks -> bookmarks.map { it.toArticleState(bookmarked = true) }
             }
         }
-    }
 
-    fun changeSearchText(text: String) {
+    fun onSearchTextChange(text: String) {
         _searchText.value = text
         searchWiki(text)
     }
 
-    fun selectTab(tab: HomeTab) {
+    fun onTabSelected(tab: HomeScreenTab) {
         _selectedTab.value = tab
     }
 
-    private fun searchWiki(text: String, startFromIndex: Int = 0) {
+    private fun searchWiki(query: String, startFromIndex: Int = 0) {
         viewModelScope.launch {
-            repository.getSearchList(text, RESULTS_PAGE_SIZE, startFromIndex)
+            repository.searchArticles(query, SEARCH_MAX_RESULTS, startFromIndex)
         }
     }
 
-    fun handleBookmark(article: ArticleDisplayModel) {
-        val dbArticle = ArticleDatabaseModel(
-            id = article.id,
-            title = article.title,
-            description = article.description,
-            thumbnail = article.thumbnail,
-            latitude = article.coordinate?.first,
-            longitude = article.coordinate?.second
-        )
+    fun onBookmarkToggle(article: ArticleState) {
         viewModelScope.launch {
-            if (article.isBookmarked) {
-                repository.removeBookmark(dbArticle)
+            if (article.bookmarked) {
+                repository.removeBookmark(article.toArticleEntity())
             } else {
-                repository.addBookmark(dbArticle)
+                repository.addBookmark(article.toArticleEntity())
             }
         }
     }
 
-    fun loadMoreResults() {
-        val tab = selectedTab.value
-        if (tab != HomeTab.Search) return
-        val text = searchText.value
-        val startFromIndex = searchResultList.value.size
-        searchWiki(text, startFromIndex)
+    fun onLoadMoreResults() {
+        if (selectedTab.value != HomeScreenTab.Search) return
+        searchWiki(searchText.value, searchedArticles.value.size)
     }
 }
