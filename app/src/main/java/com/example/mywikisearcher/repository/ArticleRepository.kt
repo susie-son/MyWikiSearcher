@@ -1,11 +1,9 @@
 package com.example.mywikisearcher.repository
 
-import com.example.mywikisearcher.model.Article
+import com.example.mywikisearcher.model.ArticleDatabaseModel
 import com.example.mywikisearcher.model.QueryResponse
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 class ArticleRepository @Inject constructor(
@@ -13,30 +11,9 @@ class ArticleRepository @Inject constructor(
     private val dao: BookmarkDao
 ) {
     private val _searchResultList = MutableStateFlow<List<QueryResponse.Query.Page>>(emptyList())
-    private val _bookmarkList = dao.getAllBookmarks()
+    val searchResultList = _searchResultList.asStateFlow()
 
-    val searchResultList: Flow<List<Article>> = combine(_searchResultList, _bookmarkList) { search, bookmarks ->
-        search.map {
-            Article(
-                pageId = it.pageId,
-                title = it.title,
-                description = it.description,
-                thumbnail = it.thumbnail?.source,
-                isBookmarked = bookmarks.any { bookmark -> it.pageId == bookmark.pageId }
-            )
-        }
-    }
-    val bookmarkList: Flow<List<Article>> = _bookmarkList.map { bookmarks ->
-        bookmarks.map {
-            Article(
-                pageId = it.pageId,
-                title = it.title,
-                description = it.description,
-                thumbnail = it.thumbnail?.source,
-                isBookmarked = true
-            )
-        }
-    }
+    val bookmarkList = dao.getAllBookmarks()
 
     suspend fun getSearchList(query: String, maxResults: Int, startFromIndex: Int) {
         if (query.isEmpty()) {
@@ -61,11 +38,11 @@ class ArticleRepository @Inject constructor(
         _searchResultList.value = finalList
     }
 
-    suspend fun removeBookmark(page: QueryResponse.Query.Page) {
-        dao.deleteBookmark(page)
+    suspend fun removeBookmark(article: ArticleDatabaseModel) {
+        dao.deleteBookmark(article)
     }
 
-    suspend fun addBookmark(page: QueryResponse.Query.Page) {
-        dao.insertBookmark(page)
+    suspend fun addBookmark(article: ArticleDatabaseModel) {
+        dao.insertBookmark(article)
     }
 }

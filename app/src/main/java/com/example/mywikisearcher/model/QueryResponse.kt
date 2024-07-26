@@ -10,11 +10,9 @@ data class QueryResponse(val query: Query? = null) {
     @Serializable
     data class Query(val pages: List<Page>? = null) {
         @Serializable
-        @Entity
         data class Page(
-            @PrimaryKey
             @SerialName("pageid")
-            val pageId: Long,
+            val pageId: Int,
             val title: String? = null,
             val description: String? = null,
             val thumbnail: Thumbnail? = null

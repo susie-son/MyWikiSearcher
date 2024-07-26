@@ -19,12 +19,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.mywikisearcher.R
-import com.example.mywikisearcher.model.Article
+import com.example.mywikisearcher.model.ArticleDisplayModel
 
 @Composable
 fun ArticleList(
-    list: List<Article>,
-    onBookmarkClick: (Article) -> Unit,
+    list: List<ArticleDisplayModel>,
+    onBookmarkClick: (ArticleDisplayModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(modifier) {
@@ -39,7 +39,7 @@ fun ArticleList(
 
 @Composable
 fun ArticleItem(
-    article: Article,
+    article: ArticleDisplayModel,
     onBookmarkClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {

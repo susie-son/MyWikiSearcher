@@ -2,8 +2,8 @@ package com.example.mywikisearcher.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mywikisearcher.model.Article
-import com.example.mywikisearcher.model.QueryResponse
+import com.example.mywikisearcher.model.ArticleDatabaseModel
+import com.example.mywikisearcher.model.ArticleDisplayModel
 import com.example.mywikisearcher.repository.ArticleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -28,10 +28,26 @@ class HomeViewModel @Inject constructor(
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
-    val articleList: Flow<List<Article>> = combine(searchResultList, bookmarksList, selectedTab) { search, bookmarks, tab ->
+    val articleList: Flow<List<ArticleDisplayModel>> = combine(searchResultList, bookmarksList, selectedTab) { search, bookmarks, tab ->
         when (tab) {
-            HomeTab.Search -> search
-            HomeTab.Bookmarks -> bookmarks
+            HomeTab.Search -> search.map {
+                ArticleDisplayModel(
+                    id = it.pageId,
+                    title = it.title ?: "",
+                    description = it.description ?: "",
+                    thumbnail = it.thumbnail?.source,
+                    isBookmarked = bookmarks.any { bookmark -> it.pageId == bookmark.id }
+                )
+            }
+            HomeTab.Bookmarks -> bookmarks.map {
+                ArticleDisplayModel(
+                    id = it.id,
+                    title = it.title,
+                    description = it.description,
+                    thumbnail = it.thumbnail,
+                    isBookmarked = true
+                )
+            }
         }
     }
 
@@ -50,22 +66,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun handleBookmark(article: Article) {
-        val queryPage = QueryResponse.Query.Page(
-            pageId = article.pageId,
+    fun handleBookmark(article: ArticleDisplayModel) {
+        val dbArticle = ArticleDatabaseModel(
+            id = article.id,
             title = article.title,
             description = article.description,
-            thumbnail = article.thumbnail?.let {
-                QueryResponse.Query.Page.Thumbnail(
-                    source = it
-                )
-            }
+            thumbnail = article.thumbnail
         )
         viewModelScope.launch {
             if (article.isBookmarked) {
-                repository.removeBookmark(queryPage)
+                repository.removeBookmark(dbArticle)
             } else {
-                repository.addBookmark(queryPage)
+                repository.addBookmark(dbArticle)
             }
         }
     }
