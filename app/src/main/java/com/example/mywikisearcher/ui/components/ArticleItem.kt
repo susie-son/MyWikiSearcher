@@ -39,7 +39,11 @@ fun ArticleItem(
         },
         supportingContent = {
             article.description?.let {
-                Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    it,
+                    maxLines = if (listItemType == TwoLines) 2 else 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         },
         overlineContent = {
